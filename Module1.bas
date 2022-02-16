@@ -8,11 +8,17 @@ Attribute VB_Name = "Module1"
 
 
 Function Henshin(DosaNum As Long, DosaNumEnd As Long)
+'本関数はデータシートに記入するのみ
+
     Attribute Henshin.VB_ProcData.VB_Invoke_Func = "m\n14"
     'カスタムショートカットキーの設定:CTRL+m
+
+    'ループカウンタ
     Dim i As Long
     Dim j As Long
-    Dim kk As Long
+
+    '未使用
+    'Dim kk As Long
 
     Dim DataHead As Long
     Dim DataEnd As Long
@@ -26,26 +32,46 @@ Function Henshin(DosaNum As Long, DosaNumEnd As Long)
     Dim ASN5 As String
     Dim ASN6 As String
 
+    'データ開始行
     DataHead = 72
     'DataNum = 1
-    Datarow = 5     'X2だけの場合
+
+    'データ選択列
+    'Datarow = 5    'E列：X2だけの場合
+    Datarow = 3     'C列
+
+    '
     DosaNumEnd = 8  'X2だけの場合
+    DosaNumEnd = 10
+
+    '計算結果の入力列：
     MaRow = 8       'X2だけの場合
+    MaRow = 10      'N
+
+    '微分の結果のリミット設定：下リミット=D1、上リミット=U1
     BibunD = -5
     BibunU = 5
+
+    'シート名称
     DosaNum = 0
-    Datarow = 3
-    DosaNumEnd = 10
-    MaRow = 10
+
+    
+    
     'Calrow = 7
+    '先頭シートに途中経過を記入する場所
     MaClm = 68
+    '現在のアクティブシート名を取得
     ASNS = ActiveSheet.Name
 
     i = 0
     j = 1
-    kk = 0
-    
+    'kk = 0
+    '未使用
+
+    'レーザ変位計のデータを取得していく
+    '通常はC列：(1)HA-V03、X2の時はE列になるらしい    
     Do Until Cells(i + DataHead, Datarow) = ""
+        '2は遅いときに変更する
         Cells(i + DataHead + 1, Datarow + MaRow + 1) = Cells(i + DataHead + 2, Datarow) - Cells(i + DataHead, Datarow)
         If Cells(i + DataHead + 1, Datarow + MaRow + 1) > BibunU Then
             Cells(i + DataHead + 1, Datarow + MaRow + 6) = "U1"
@@ -71,6 +97,7 @@ Function Henshin(DosaNum As Long, DosaNumEnd As Long)
         i = i + 1
     Loop
     Application.ScreenUpdating = False
+    '計算用シートの作成
     For k = 1 To DosaNumEnd
         Sheets.Add After:=ActiveSheet
         ActiveSheet.Name = "Data_N" & k + 2
@@ -79,6 +106,7 @@ Function Henshin(DosaNum As Long, DosaNumEnd As Long)
             Worksheets(ASN3).Cells(3, 3 + j) = Worksheets(ASNS).Cells(MaClm + 1, 9 + j + MaRow)
             Worksheets(ASN3).Activate
         Next j
+        '○回目、計算結果を記入していく
         j = 1
         Do Until Cells(3, 3 + j) = ""
             For i = 2 To 5001
@@ -89,6 +117,7 @@ Function Henshin(DosaNum As Long, DosaNumEnd As Long)
             j = j + 1
             NamaKaisuu = j
         Loop
+        '計算シートのC列にインデックス追加
         For i = 2 To 5001
             Cells(3 + i, 3) = (i - 1)
         Next i
@@ -113,6 +142,7 @@ Sub Henshin_fileKurikaeshi()
     Dim DosaNumEnd As Long
     Dim CheckTP(4) As Long
 
+    '読み込むファイルの先頭から終了までの名称
     FileHead = 16
     FileEnd = 16
 
@@ -165,10 +195,10 @@ Sub Henshin_fileKurikaeshi()
     CheckTP(4) = 3200
 
     'LIS48sec時送出
-    CheckTP(1) = 4400
-    CheckTP(2) = 2100
-    CheckTP(3) = 800
-    CheckTP(4) = 3200
+    CheckTP(1) = 4400   'C列：X1のEND
+    CheckTP(2) = 2100   'E列：X2のEND
+    CheckTP(3) = 800    'D/F列：X1/X2の12mmの位置
+    CheckTP(4) = 3200   'D/F列：X1/X2のHOME位置
 
     ThisWorkbook.Activate
     Sheets.Add After:=ActiveSheet
