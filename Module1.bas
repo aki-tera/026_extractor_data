@@ -82,6 +82,7 @@ Function Henshin(DosaNum As Long, DosaNumEnd As Long)
         If Cells(i + DataHead + 1, Datarow + MaRow + 4) = "" Then
             If Cells(i + DataHead, Datarow + MaRow + 6) = "U1" Then
                 If Cells(i + DataHead + 50, Datarow) > 5 Then
+                ' 50と5の値も毎回変更する
                     If Cells(i + DataHead + 3 - 1, Datarow + MaRow + 5) = "Start" Then
                         '何もしない？
                     Else
