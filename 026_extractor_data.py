@@ -1,3 +1,5 @@
+import json
+
 import glob
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -21,22 +23,29 @@ def delete_duplicaion_index(input_list):
 
 
 def main():
-    single_file_names = glob.glob("data/auto$0$?.csv")
-    double_file_names = glob.glob("data/auto$0$??.csv")
 
+    # パラメータの取り出し
+    setting = open("setting.json", "r", encoding="utf-8")
+    setting_dict = json.load(setting)
+
+    # 結果データの読み込み
+    single_file_names = glob.glob(setting_dict["file"]["single"])
+    double_file_names = glob.glob(setting_dict["file"]["double"])
     all_file_names = single_file_names + double_file_names
     temp_list = []
-
     for i in all_file_names:
         print(i)
         temp = pd.read_csv(i, skiprows=70, encoding="cp932")
         temp_list.append(temp)
 
+    # データフレームの結合
     df_csv = pd.concat(temp_list, ignore_index=False)
     df_csv.reset_index(drop=True, inplace=True)
 
+    # カラム名を変更
     df_csv.columns = ["date", "sec", "data1", "data2", "data3"]
 
+    # 生データの表示
     fig = plt.figure(figsize=(10, 6))
     ax = fig.add_subplot()
     df_csv[0:1000000]["data1"].plot(ax=ax)
@@ -45,25 +54,30 @@ def main():
     _ = ax.legend()
     plt.show()
 
-    delta_period = 2
+    # 閾値用の差分作成
+    # NaNは0埋め
+    delta_period = setting_dict["period"]["step"]
     temp = pd.DataFrame(df_csv["data1"].diff(delta_period).fillna(0))
     temp.columns = ["delta"]
     df_delta = pd.merge(df_csv, temp, left_index=True, right_index=True)
 
-    delta_end_period = 5
-    delta_start_period = -5
+    # 閾値の行を取得
+    delta_start_triger = setting_dict["period"]["start"]
+    delta_end_triger = setting_dict["period"]["end"]
+    end_duplication_index = df_delta.index[df_delta["delta"] > delta_end_triger].tolist()
+    start_duplication_index = df_delta.index[df_delta["delta"] < delta_start_triger].tolist()
 
-    end_duplication_index = df_delta.index[df_delta["delta"] > delta_end_period].tolist()
-    start_duplication_index = df_delta.index[df_delta["delta"] < delta_start_period].tolist()
-
+    # 閾値が連続している行を削除
     end_index = delete_duplicaion_index(end_duplication_index)
     start_duplication_index.reverse()
     start_index = delete_duplicaion_index(start_duplication_index)
     start_index.reverse()
 
+    # 抽出したデータを格納するデータフレームを作る
     df_extract = pd.DataFrame(list(zip(start_index, end_index)), columns=["start", "end"])
     df_extract = df_extract.assign(period=df_extract["end"] - df_extract["start"])
 
+    # 切り出した区間の幅を表示
     fig = plt.figure(figsize=(10, 6))
     ax = fig.add_subplot()
     df_extract["period"].plot(ax=ax)
@@ -71,6 +85,7 @@ def main():
     _ = ax.grid(True)
     plt.show()
 
+    # 一部の切り出した波形を表示
     fig, ax = plt.subplots(3, 3, figsize=[10, 6])
     plt.suptitle("おかしなグラフが無いか確認する")
     ax_f = ax.flatten()
@@ -81,16 +96,22 @@ def main():
             _ = ax_f[i - 1001].grid(True)
     plt.show()
 
-    extract_time = [100, 200, 300, 400]
-    temp_data = [[] for i in range(4)]
+    # 切り取りタイミングの設定
+    extract_time = []
+    for i in ["01", "02", "03", "04"]:
+        extract_time.append(setting_dict["extract"][i])
 
+    # 抽出データをリストに仮保存
+    temp_data = [[] for i in range(4)]
     for m in df_extract["start"]:
         for i, n in enumerate(extract_time):
             temp_data[i].append(df_delta.loc[m + n]["data1"])
-
+    
+    # リストに仮保存したデータをデータフレームに
     for i, n in enumerate(["1st", "2nd", "3rd", "4th"]):
         df_extract[n] = temp_data[i]
 
+    # 抽出データのプロット
     fig = plt.figure(figsize=(10, 6))
     ax = fig.add_subplot()
     for i in ["1st", "2nd", "3rd", "4th"]:
@@ -100,6 +121,7 @@ def main():
         _ = ax.legend()
     plt.show()
 
+    # エクセルに結果を書き込み
     df_extract.to_excel("output.xlsx", sheet_name="result")
 
 
