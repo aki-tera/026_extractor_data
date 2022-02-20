@@ -29,8 +29,8 @@ def main():
     setting_dict = json.load(setting)
 
     # 結果データの読み込み
-    single_file_names = glob.glob(setting_dict["file"]["single"])
-    double_file_names = glob.glob(setting_dict["file"]["double"])
+    single_file_names = glob.glob(setting_dict["file"]["path"] + setting_dict["file"]["single"])
+    double_file_names = glob.glob(setting_dict["file"]["path"] + setting_dict["file"]["double"])
     all_file_names = single_file_names + double_file_names
     temp_list = []
     for i in all_file_names:

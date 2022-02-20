@@ -1,8 +1,9 @@
 {
     "file":{
         "説明":"入力ファイル名",
-        "single":"data/auto$0$?.csv",
-        "double":"data/auto$0$??.csv"
+        "path":"data/",
+        "single":"auto$0$?.csv",
+        "double":"auto$0$??.csv"
     },
     "period":{
         "説明":"差分の閾値",
