@@ -21,13 +21,23 @@ def delete_duplicaion_index(input_list):
         temp = i
     return index
 
-def plot_graph(pg_df, pg_title_text):
+
+def plot_graph(pg_df, pg_title_text, pg_plane=True):
     fig = plt.figure(figsize=(10, 6))
-    ax = fig.add_subplot()
-    pg_df.plot(ax=ax)
-    _ = ax.set_title(pg_title_text)
-    _ = ax.grid(True)
-    _ = ax.legend()
+    if pg_plane:
+        ax = fig.add_subplot()
+        pg_df.plot(ax=ax)
+        _ = ax.set_title(pg_title_text)
+        _ = ax.grid(True)
+        _ = ax.legend()
+    else:
+        ax = fig.subplots(3, 3)
+        plt.suptitle(pg_title_text)
+        ax_f = ax.flatten()
+        for i, m in enumerate(pg_df):
+            ax_f[i].plot(pg_df[m])
+            _ = ax_f[i].set_title(m)
+            _ = ax_f[i].grid(True)
     plt.show()
 
 
@@ -86,15 +96,16 @@ def main():
                "切り出した区間の長さをプロット:おかしな値が無いかここで確認する")
 
     # 一部の切り出した波形を表示
-    fig, ax = plt.subplots(3, 3, figsize=[10, 6])
-    plt.suptitle("おかしなグラフが無いか確認する")
-    ax_f = ax.flatten()
+    df_plot_temp = pd.DataFrame(index=[])
     for i, (m, n) in enumerate(zip(df_extract["start"], df_extract["end"])):
         if 1000 < i < 1010:
-            ax_f[i - 1001].plot(df_delta[m:n]["data1"])
-            _ = ax_f[i - 1001].set_title(i)
-            _ = ax_f[i - 1001].grid(True)
-    plt.show()
+            temp = df_delta[m:n]["data1"]
+            temp = temp.reset_index()
+            df_plot_temp[str(i)] = temp["data1"]
+    # df_plot_temp = df_plot_temp.fillna(0)
+    plot_graph(df_plot_temp,
+               "おかしなグラフが無いか確認する",
+               pg_plane=False)
 
     # 切り取りタイミングの設定
     extract_time = []
