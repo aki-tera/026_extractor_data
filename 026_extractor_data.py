@@ -65,6 +65,7 @@ def main():
     df_csv.columns = ["date", "sec", "data1", "data2", "data3"]
 
     # 生データの表示
+    print("読み込んだデータの一部（0～1000000）を表示")
     plot_graph(df_csv[0:1000000]["data1"],
                "読み込んだデータの一部（0～1000000）を表示")
 
@@ -92,6 +93,7 @@ def main():
     df_extract = df_extract.assign(period=df_extract["end"] - df_extract["start"])
 
     # 切り出した区間の幅を表示
+    print("切り出した区間の長さをプロット:おかしな値が無いかここで確認する")
     plot_graph(df_extract["period"],
                "切り出した区間の長さをプロット:おかしな値が無いかここで確認する")
 
@@ -102,7 +104,7 @@ def main():
             temp = df_delta[m:n]["data1"]
             temp = temp.reset_index()
             df_plot_temp[str(i)] = temp["data1"]
-    # df_plot_temp = df_plot_temp.fillna(0)
+    print("おかしなグラフが無いか確認する")
     plot_graph(df_plot_temp,
                "おかしなグラフが無いか確認する",
                pg_plane=False)
@@ -123,9 +125,11 @@ def main():
         df_extract[n] = temp_data[i]
 
     # 抽出データのプロット
+    print("抽出したデータをプロット")
     plot_graph(df_extract.loc[:, "1st":"4th"], "抽出したデータをプロット")
 
     # エクセルに結果を書き込み
+    print("output.xlsxに書き込みました")
     df_extract.to_excel("output.xlsx", sheet_name="result")
 
 
