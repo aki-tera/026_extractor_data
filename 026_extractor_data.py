@@ -21,6 +21,15 @@ def delete_duplicaion_index(input_list):
         temp = i
     return index
 
+def plot_graph(pg_df, pg_title_text):
+    fig = plt.figure(figsize=(10, 6))
+    ax = fig.add_subplot()
+    pg_df.plot(ax=ax)
+    _ = ax.set_title(pg_title_text)
+    _ = ax.grid(True)
+    _ = ax.legend()
+    plt.show()
+
 
 def main():
 
@@ -46,13 +55,8 @@ def main():
     df_csv.columns = ["date", "sec", "data1", "data2", "data3"]
 
     # 生データの表示
-    fig = plt.figure(figsize=(10, 6))
-    ax = fig.add_subplot()
-    df_csv[0:1000000]["data1"].plot(ax=ax)
-    _ = ax.set_title("読み込んだデータの一部（0～1000000）を表示")
-    _ = ax.grid(True)
-    _ = ax.legend()
-    plt.show()
+    plot_graph(df_csv[0:1000000]["data1"],
+               "読み込んだデータの一部（0～1000000）を表示")
 
     # 閾値用の差分作成
     # NaNは0埋め
@@ -78,12 +82,8 @@ def main():
     df_extract = df_extract.assign(period=df_extract["end"] - df_extract["start"])
 
     # 切り出した区間の幅を表示
-    fig = plt.figure(figsize=(10, 6))
-    ax = fig.add_subplot()
-    df_extract["period"].plot(ax=ax)
-    _ = ax.set_title("切り出した区間の長さをプロット:おかしな値が無いかここで確認する")
-    _ = ax.grid(True)
-    plt.show()
+    plot_graph(df_extract["period"],
+               "切り出した区間の長さをプロット:おかしな値が無いかここで確認する")
 
     # 一部の切り出した波形を表示
     fig, ax = plt.subplots(3, 3, figsize=[10, 6])
@@ -112,14 +112,7 @@ def main():
         df_extract[n] = temp_data[i]
 
     # 抽出データのプロット
-    fig = plt.figure(figsize=(10, 6))
-    ax = fig.add_subplot()
-    for i in ["1st", "2nd", "3rd", "4th"]:
-        df_extract[i].plot(ax=ax)
-        _ = ax.set_title("抽出したデータをプロット")
-        _ = ax.grid(True)
-        _ = ax.legend()
-    plt.show()
+    plot_graph(df_extract.loc[:, "1st":"4th"], "抽出したデータをプロット")
 
     # エクセルに結果を書き込み
     df_extract.to_excel("output.xlsx", sheet_name="result")
