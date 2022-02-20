@@ -22,6 +22,25 @@ def delete_duplicaion_index(input_list):
     return index
 
 
+def plot_graph(pg_df, pg_title_text, pg_plane=True):
+    fig = plt.figure(figsize=(10, 6))
+    if pg_plane:
+        ax = fig.add_subplot()
+        pg_df.plot(ax=ax)
+        _ = ax.set_title(pg_title_text)
+        _ = ax.grid(True)
+        _ = ax.legend()
+    else:
+        ax = fig.subplots(3, 3)
+        plt.suptitle(pg_title_text)
+        ax_f = ax.flatten()
+        for i, m in enumerate(pg_df):
+            ax_f[i].plot(pg_df[m])
+            _ = ax_f[i].set_title(m)
+            _ = ax_f[i].grid(True)
+    plt.show()
+
+
 def main():
 
     # パラメータの取り出し
@@ -46,13 +65,8 @@ def main():
     df_csv.columns = ["date", "sec", "data1", "data2", "data3"]
 
     # 生データの表示
-    fig = plt.figure(figsize=(10, 6))
-    ax = fig.add_subplot()
-    df_csv[0:1000000]["data1"].plot(ax=ax)
-    _ = ax.set_title("読み込んだデータの一部（0～1000000）を表示")
-    _ = ax.grid(True)
-    _ = ax.legend()
-    plt.show()
+    plot_graph(df_csv[0:1000000]["data1"],
+               "読み込んだデータの一部（0～1000000）を表示")
 
     # 閾値用の差分作成
     # NaNは0埋め
@@ -78,23 +92,20 @@ def main():
     df_extract = df_extract.assign(period=df_extract["end"] - df_extract["start"])
 
     # 切り出した区間の幅を表示
-    fig = plt.figure(figsize=(10, 6))
-    ax = fig.add_subplot()
-    df_extract["period"].plot(ax=ax)
-    _ = ax.set_title("切り出した区間の長さをプロット:おかしな値が無いかここで確認する")
-    _ = ax.grid(True)
-    plt.show()
+    plot_graph(df_extract["period"],
+               "切り出した区間の長さをプロット:おかしな値が無いかここで確認する")
 
     # 一部の切り出した波形を表示
-    fig, ax = plt.subplots(3, 3, figsize=[10, 6])
-    plt.suptitle("おかしなグラフが無いか確認する")
-    ax_f = ax.flatten()
+    df_plot_temp = pd.DataFrame(index=[])
     for i, (m, n) in enumerate(zip(df_extract["start"], df_extract["end"])):
         if 1000 < i < 1010:
-            ax_f[i - 1001].plot(df_delta[m:n]["data1"])
-            _ = ax_f[i - 1001].set_title(i)
-            _ = ax_f[i - 1001].grid(True)
-    plt.show()
+            temp = df_delta[m:n]["data1"]
+            temp = temp.reset_index()
+            df_plot_temp[str(i)] = temp["data1"]
+    # df_plot_temp = df_plot_temp.fillna(0)
+    plot_graph(df_plot_temp,
+               "おかしなグラフが無いか確認する",
+               pg_plane=False)
 
     # 切り取りタイミングの設定
     extract_time = []
@@ -112,14 +123,7 @@ def main():
         df_extract[n] = temp_data[i]
 
     # 抽出データのプロット
-    fig = plt.figure(figsize=(10, 6))
-    ax = fig.add_subplot()
-    for i in ["1st", "2nd", "3rd", "4th"]:
-        df_extract[i].plot(ax=ax)
-        _ = ax.set_title("抽出したデータをプロット")
-        _ = ax.grid(True)
-        _ = ax.legend()
-    plt.show()
+    plot_graph(df_extract.loc[:, "1st":"4th"], "抽出したデータをプロット")
 
     # エクセルに結果を書き込み
     df_extract.to_excel("output.xlsx", sheet_name="result")
