@@ -39,6 +39,8 @@ def plot_graph(pg_df, pg_title_text, pg_plane=True):
             ax_f[i].plot(pg_df[m])
             _ = ax_f[i].set_title(m)
             _ = ax_f[i].grid(True)
+        # グラフの重なりをなくす為に必要
+        plt.tight_layout()
     plt.show()
 
 
