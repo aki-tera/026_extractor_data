@@ -73,6 +73,9 @@ def main():
     # 処理するデータを選択する
     process_label = setting_dict["label"]["01"]["00"]
 
+    # 参考データを取り出す
+    reference_data = list(setting_dict["label"]["01"].keys())[2:]
+    
     # 生データの表示
     print("読み込んだデータの一部（0～1000000）を表示")
     plot_graph(df_csv[0:1000000][process_label],
