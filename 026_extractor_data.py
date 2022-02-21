@@ -1,4 +1,5 @@
 import json
+import csv
 
 import glob
 import pandas as pd
@@ -61,18 +62,23 @@ def main():
     df_csv = pd.concat(temp_list, ignore_index=False)
     df_csv.reset_index(drop=True, inplace=True)
 
-    # カラム名を変更
-    df_csv.columns = ["date", "sec", "data1", "data2", "data3"]
+    # カラム名をcsvから取得して変更する
+    with open(single_file_names[0], "r") as csv_file:
+        csv_reader = csv.reader(csv_file)
+        for i, row in enumerate(csv_reader):
+            if i == 40:
+                df_csv_label = row
+    df_csv.columns = ["date", "sec"] + df_csv_label[2:len(df_csv_label)]
 
     # 生データの表示
     print("読み込んだデータの一部（0～1000000）を表示")
-    plot_graph(df_csv[0:1000000]["data1"],
+    plot_graph(df_csv[0:1000000][df_csv_label[2]],
                "読み込んだデータの一部（0～1000000）を表示")
 
     # 閾値用の差分作成
     # NaNは0埋め
     delta_period = setting_dict["period"]["step"]
-    temp = pd.DataFrame(df_csv["data1"].diff(delta_period).fillna(0))
+    temp = pd.DataFrame(df_csv[df_csv_label[2]].diff(delta_period).fillna(0))
     temp.columns = ["delta"]
     df_delta = pd.merge(df_csv, temp, left_index=True, right_index=True)
 
@@ -101,9 +107,9 @@ def main():
     df_plot_temp = pd.DataFrame(index=[])
     for i, (m, n) in enumerate(zip(df_extract["start"], df_extract["end"])):
         if 1000 < i < 1010:
-            temp = df_delta[m:n]["data1"]
+            temp = df_delta[m:n][df_csv_label[2]]
             temp = temp.reset_index()
-            df_plot_temp[str(i)] = temp["data1"]
+            df_plot_temp[str(i)] = temp[df_csv_label[2]]
     print("おかしなグラフが無いか確認する")
     plot_graph(df_plot_temp,
                "おかしなグラフが無いか確認する",
@@ -118,7 +124,7 @@ def main():
     temp_data = [[] for i in range(4)]
     for m in df_extract["start"]:
         for i, n in enumerate(extract_time):
-            temp_data[i].append(df_delta.loc[m + n]["data1"])
+            temp_data[i].append(df_delta.loc[m + n][df_csv_label[2]])
     
     # リストに仮保存したデータをデータフレームに
     for i, n in enumerate(["1st", "2nd", "3rd", "4th"]):
