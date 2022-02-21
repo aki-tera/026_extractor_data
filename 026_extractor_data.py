@@ -136,6 +136,14 @@ def main():
     for i, n in enumerate(["1st", "2nd", "3rd", "4th"]):
         df_extract[n] = temp_data[i]
 
+    # 参照データを切り取り、データフレームに追加
+    temp_data = [[] for i in range(len(reference_data))]
+    for m in df_extract["start"]:
+        for i, n in enumerate(reference_data):
+            temp_data[i].append(df_delta.loc[m][setting_dict["label"]["01"][n]])
+    for i, n in enumerate(reference_data):
+        df_extract[setting_dict["label"]["01"][n]] = temp_data[i]
+
     # 抽出データのプロット
     print("抽出したデータをプロット")
     plot_graph(df_extract.loc[:, "1st":"4th"], "抽出したデータをプロット")
