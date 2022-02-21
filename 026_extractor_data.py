@@ -45,8 +45,8 @@ def plot_graph(pg_df, pg_title_text, pg_plane=True):
 def main():
 
     # パラメータの取り出し
-    setting = open("setting.json", "r", encoding="utf-8")
-    setting_dict = json.load(setting)
+    with open("setting.json", "r", encoding="utf-8") as setting:
+        setting_dict = json.load(setting)
 
     # 結果データの読み込み
     single_file_names = glob.glob(setting_dict["file"]["path"] + setting_dict["file"]["single"])
