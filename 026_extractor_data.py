@@ -69,8 +69,6 @@ def main():
             if i == 40:
                 df_csv_label = row
     df_csv.columns = ["date", "sec"] + df_csv_label[2:len(df_csv_label)]
-    print(df_csv.columns)
-    print(df_csv)
 
     # 生データの表示
     print("読み込んだデータの一部（0～1000000）を表示")
