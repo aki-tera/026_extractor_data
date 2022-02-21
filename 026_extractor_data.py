@@ -71,7 +71,7 @@ def main():
     df_csv.columns = ["date", "sec"] + df_csv_label[2:len(df_csv_label)]
 
     # 処理するデータを選択する
-    process_label = setting_dict["label"]["02"]["00"]
+    process_label = setting_dict["label"]["01"]["00"]
 
     # 生データの表示
     print("読み込んだデータの一部（0～1000000）を表示")
