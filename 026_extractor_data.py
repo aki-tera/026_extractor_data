@@ -139,7 +139,7 @@ def main():
 
     # エクセルに結果を書き込み
     print("output.xlsxに書き込みました")
-    df_extract.to_excel("output.xlsx", sheet_name="result")
+    df_extract.to_excel("output.xlsx", sheet_name=process_label)
 
 
 if __name__ == "__main__":
