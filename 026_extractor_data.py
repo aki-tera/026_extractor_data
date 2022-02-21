@@ -79,9 +79,9 @@ def main():
     reference_data = list(setting_dict["label"]["01"].keys())[2:]
     
     # 生データの表示
-    print("読み込んだデータの一部（0～1000000）を表示")
-    plot_graph(df_csv[0:1000000][process_label],
-               "読み込んだデータの一部（0～1000000）を表示")
+    print("読み込んだデータの一部（0～200000）を表示")
+    plot_graph(df_csv[0:200000][process_label],
+               "読み込んだデータの一部（0～200000）を表示")
 
     # 閾値用の差分作成
     # NaNは0埋め
@@ -89,6 +89,11 @@ def main():
     temp = pd.DataFrame(df_csv[process_label].diff(delta_period).fillna(0))
     temp.columns = ["delta"]
     df_delta = pd.merge(df_csv, temp, left_index=True, right_index=True)
+
+    # データの差分量を見る
+    print("データの差分量（0～200000）を表示")
+    plot_graph(df_delta[0000:200000]["delta"],
+               "データの差分量（0～200000）を表示")
 
     # 閾値の行を取得
     delta_start_triger = setting_dict["period"]["start"]
