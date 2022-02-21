@@ -45,8 +45,8 @@ def plot_graph(pg_df, pg_title_text, pg_plane=True):
 def main():
 
     # パラメータの取り出し
-    setting = open("setting.json", "r", encoding="utf-8")
-    setting_dict = json.load(setting)
+    with open("setting.json", "r", encoding="utf-8") as setting:
+        setting_dict = json.load(setting)
 
     # 結果データの読み込み
     single_file_names = glob.glob(setting_dict["file"]["path"] + setting_dict["file"]["single"])
@@ -70,15 +70,18 @@ def main():
                 df_csv_label = row
     df_csv.columns = ["date", "sec"] + df_csv_label[2:len(df_csv_label)]
 
+    # 処理するデータを選択する
+    process_label = setting_dict["label"]["02"]["00"]
+
     # 生データの表示
     print("読み込んだデータの一部（0～1000000）を表示")
-    plot_graph(df_csv[0:1000000][df_csv_label[2]],
+    plot_graph(df_csv[0:1000000][process_label],
                "読み込んだデータの一部（0～1000000）を表示")
 
     # 閾値用の差分作成
     # NaNは0埋め
     delta_period = setting_dict["period"]["step"]
-    temp = pd.DataFrame(df_csv[df_csv_label[2]].diff(delta_period).fillna(0))
+    temp = pd.DataFrame(df_csv[process_label].diff(delta_period).fillna(0))
     temp.columns = ["delta"]
     df_delta = pd.merge(df_csv, temp, left_index=True, right_index=True)
 
@@ -107,9 +110,9 @@ def main():
     df_plot_temp = pd.DataFrame(index=[])
     for i, (m, n) in enumerate(zip(df_extract["start"], df_extract["end"])):
         if 1000 < i < 1010:
-            temp = df_delta[m:n][df_csv_label[2]]
+            temp = df_delta[m:n][process_label]
             temp = temp.reset_index()
-            df_plot_temp[str(i)] = temp[df_csv_label[2]]
+            df_plot_temp[str(i)] = temp[process_label]
     print("おかしなグラフが無いか確認する")
     plot_graph(df_plot_temp,
                "おかしなグラフが無いか確認する",
@@ -124,7 +127,7 @@ def main():
     temp_data = [[] for i in range(4)]
     for m in df_extract["start"]:
         for i, n in enumerate(extract_time):
-            temp_data[i].append(df_delta.loc[m + n][df_csv_label[2]])
+            temp_data[i].append(df_delta.loc[m + n][process_label])
     
     # リストに仮保存したデータをデータフレームに
     for i, n in enumerate(["1st", "2nd", "3rd", "4th"]):
@@ -136,7 +139,7 @@ def main():
 
     # エクセルに結果を書き込み
     print("output.xlsxに書き込みました")
-    df_extract.to_excel("output.xlsx", sheet_name="result")
+    df_extract.to_excel("output.xlsx", sheet_name=process_label)
 
 
 if __name__ == "__main__":
