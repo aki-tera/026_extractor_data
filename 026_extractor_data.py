@@ -153,7 +153,7 @@ def main():
 
     # 抽出データのプロット
     print("抽出したデータをプロット")
-    plot_graph(df_extract.loc[:, "1st":setting_dict["label"]["01"][reference_data[-1]]],
+    plot_graph(df_extract.loc[:, list(setting_dict["extract"].keys())[1]:setting_dict["label"]["01"][reference_data[-1]]],
                "抽出したデータをプロット",
                pg_plane=False)
 
