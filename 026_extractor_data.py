@@ -140,7 +140,7 @@ def main():
             temp_data[i].append(df_delta.loc[m + n][process_label])
     
     # リストに仮保存したデータをデータフレームに
-    for i, n in enumerate(["1st", "2nd", "3rd", "4th"]):
+    for i, n in enumerate(list(setting_dict["extract"].keys())[1:]):
         df_extract[n] = temp_data[i]
 
     # 参照データを切り取り、データフレームに追加
