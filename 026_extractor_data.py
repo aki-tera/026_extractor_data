@@ -130,17 +130,17 @@ def main():
 
     # 切り取りタイミングの設定
     extract_time = []
-    for i in ["01", "02", "03", "04"]:
+    for i in list(setting_dict["extract"].keys())[1:]:
         extract_time.append(setting_dict["extract"][i])
 
     # 抽出データをリストに仮保存
-    temp_data = [[] for i in range(4)]
+    temp_data = [[] for i in range(len(extract_time))]
     for m in df_extract["start"]:
         for i, n in enumerate(extract_time):
             temp_data[i].append(df_delta.loc[m + n][process_label])
     
     # リストに仮保存したデータをデータフレームに
-    for i, n in enumerate(["1st", "2nd", "3rd", "4th"]):
+    for i, n in enumerate(list(setting_dict["extract"].keys())[1:]):
         df_extract[n] = temp_data[i]
 
     # 参照データを切り取り、データフレームに追加
@@ -153,7 +153,7 @@ def main():
 
     # 抽出データのプロット
     print("抽出したデータをプロット")
-    plot_graph(df_extract.loc[:, "1st":setting_dict["label"]["01"][reference_data[-1]]],
+    plot_graph(df_extract.loc[:, list(setting_dict["extract"].keys())[1]:setting_dict["label"]["01"][reference_data[-1]]],
                "抽出したデータをプロット",
                pg_plane=False)
 
