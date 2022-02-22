@@ -107,6 +107,10 @@ def main():
     start_index = delete_duplicaion_index(start_duplication_index)
     start_index.reverse()
 
+    # 最初にエンドトリガーが来る場合、カットする必要がある
+    if start_index[0] > end_index[0]:
+        end_index.pop(0)
+
     # 抽出したデータを格納するデータフレームを作る
     df_extract = pd.DataFrame(list(zip(start_index, end_index)), columns=["start", "end"])
     df_extract = df_extract.assign(period=df_extract["end"] - df_extract["start"])
