@@ -12,6 +12,14 @@ rc('font', family=jp_font)
 
 
 def delete_duplicaion_index(input_list):
+    """delete consecutive numbers in the list.
+
+    Args:
+        input_list (list): A continuous number exists.
+
+    Returns:
+        list: There is no continuous number.
+    """
     temp = 0
     index = []
     for i in input_list:
@@ -24,6 +32,14 @@ def delete_duplicaion_index(input_list):
 
 
 def plot_graph(pg_df, pg_title_text, pg_plane=True):
+    """plot pandas DataFrame on the graph(s).
+
+    Args:
+        pg_df (pandas.DataFrame): Data to be graphed.
+        pg_title_text (str): title
+        pg_plane (bool, optional): Choose between a single graph or multiple graphs.
+                                   Defaults to True.
+    """
     fig = plt.figure(figsize=(10, 6))
     if pg_plane:
         ax = fig.add_subplot()
