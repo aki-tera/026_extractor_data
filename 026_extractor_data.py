@@ -130,7 +130,7 @@ def main():
 
     # 切り取りタイミングの設定
     extract_time = []
-    for i in ["01", "02", "03", "04"]:
+    for i in list(setting_dict["extract"].keys())[1:]:
         extract_time.append(setting_dict["extract"][i])
 
     # 抽出データをリストに仮保存
