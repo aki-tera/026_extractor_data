@@ -134,7 +134,7 @@ def main():
         extract_time.append(setting_dict["extract"][i])
 
     # 抽出データをリストに仮保存
-    temp_data = [[] for i in range(4)]
+    temp_data = [[] for i in range(len(extract_time))]
     for m in df_extract["start"]:
         for i, n in enumerate(extract_time):
             temp_data[i].append(df_delta.loc[m + n][process_label])
