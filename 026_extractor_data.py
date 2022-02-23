@@ -60,126 +60,153 @@ def plot_graph(pg_df, pg_title_text, pg_plane=True):
     plt.show()
 
 
+class ExtractorData():
+    def __init__(self, json_file_path):
+        # パラメータの取り出し
+        with open(json_file_path, "r", encoding="utf-8") as setting:
+            self._setting_dict = json.load(setting)
+        # 設定jsonから変数へ読み込み
+        # ファイル名
+        single_file_names = glob.glob(self._setting_dict["file"]["path"] + self._setting_dict["file"]["single"])
+        double_file_names = glob.glob(self._setting_dict["file"]["path"] + self._setting_dict["file"]["double"])
+        all_file_names = single_file_names + double_file_names
+        # ラベル
+        self._label_dict = self._setting_dict["label"]
+        # 閾値
+        self._period_step = self._setting_dict["period"]["step"]
+        self._period_start = self._setting_dict["period"]["start"]
+        self._period_end = self._setting_dict["period"]["end"]
+        # 抽出タイミング
+        self._extract_dict = self._setting_dict["extract"]
+        # 結果データの読み込み
+        temp_list = []
+        for i in all_file_names:
+            print(i)
+            temp = pd.read_csv(i, skiprows=70, encoding="cp932")
+            temp_list.append(temp)
+        # データフレームの結合
+        self._df_csv = pd.concat(temp_list, ignore_index=False)
+        self._df_csv.reset_index(drop=True, inplace=True)
+        # カラム名をcsvから取得して変更する
+        with open(single_file_names[0], "r") as csv_file:
+            csv_reader = csv.reader(csv_file)
+            for i, row in enumerate(csv_reader):
+                if i == 40:
+                    df_csv_label = row
+        self._df_csv.columns = ["date", "sec"] + df_csv_label[2:len(df_csv_label)]
+        # ラベル名のリストを戻す
+        self.label_index = list(self._label_dict.keys())
+
+    def confirm_data(self, label_number, display_graph=True):
+        # 処理するデータを選択する
+        self._process_label = self._setting_dict["label"][label_number]["00"]
+        # 参考データを取り出す
+        self._reference_data = list(self._setting_dict["label"][label_number].keys())[2:]
+        # 生データの表示
+        if display_graph:
+            print("読み込んだデータの一部（0～200000）を表示")
+            plot_graph(self._df_csv[0:200000][self._process_label],
+                       "読み込んだデータの一部（0～200000）を表示")
+
+    def generate_differences(self, display_graph=True):
+        # 閾値用の差分作成
+        # NaNは0埋め
+        self._delta_period = self._setting_dict["period"]["step"]
+        temp = pd.DataFrame(self._df_csv[self._process_label].diff(self._delta_period).fillna(0))
+        temp.columns = ["delta"]
+        self._df_delta = pd.merge(self._df_csv, temp, left_index=True, right_index=True)
+        # データの差分量を見る
+        if display_graph:
+            print("データの差分量（0～200000）を表示")
+            plot_graph(self._df_delta[0000:200000]["delta"],
+                       "データの差分量（0～200000）を表示")
+
+    def cut_out_data(self, display_graph=True):
+        # 閾値の行を取得
+        self._delta_start_triger = self._setting_dict["period"]["start"]
+        self._delta_end_triger = self._setting_dict["period"]["end"]
+        self._end_duplication_index = self._df_delta.index[self._df_delta["delta"] > self._delta_end_triger].tolist()
+        start_duplication_index = self._df_delta.index[self._df_delta["delta"] < self._delta_start_triger].tolist()
+        # 閾値が連続している行を削除
+        self._end_index = delete_duplicaion_index(self._end_duplication_index)
+        start_duplication_index.reverse()
+        self._start_index = delete_duplicaion_index(start_duplication_index)
+        self._start_index.reverse()
+        # 最初にエンドトリガーが来る場合、カットする必要がある
+        if self._start_index[0] > self._end_index[0]:
+            self._end_index.pop(0)
+        # 抽出したデータを格納するデータフレームを作る
+        self._df_extract = pd.DataFrame(list(zip(self._start_index, self._end_index)), columns=["start", "end"])
+        self._df_extract = self._df_extract.assign(period=self._df_extract["end"] - self._df_extract["start"])
+        # 切り出した区間の幅を表示
+        if display_graph:
+            print("切り出した区間の長さをプロット:おかしな値が無いかここで確認する")
+            plot_graph(self._df_extract["period"],
+                       "切り出した区間の長さをプロット:おかしな値が無いかここで確認する")
+
+    def confirm_graphs(self, display_graph=True):
+        # データの一部を切り出し
+        df_plot_temp = pd.DataFrame(index=[])
+        for i, (m, n) in enumerate(zip(self._df_extract["start"], self._df_extract["end"])):
+            if 1000 < i < 1010:
+                temp = self._df_delta[m:n][self._process_label]
+                temp = temp.reset_index()
+                df_plot_temp[str(i)] = temp[self._process_label]
+        # 一部の切り出した波形を表示
+        if display_graph:
+            print("おかしなグラフが無いか確認する")
+            plot_graph(df_plot_temp,
+                       "おかしなグラフが無いか確認する",
+                       pg_plane=False)
+
+    def output_results(self, label_number, display_graph=True):
+        # 切り取りタイミングの設定
+        extract_time = []
+        for i in list(self._setting_dict["extract"].keys())[1:]:
+            extract_time.append(self._setting_dict["extract"][i])
+        # 抽出データをリストに仮保存
+        temp_data = [[] for i in range(len(extract_time))]
+        for m in self._df_extract["start"]:
+            for i, n in enumerate(extract_time):
+                temp_data[i].append(self._df_delta.loc[m + n][self._process_label])
+        # リストに仮保存したデータをデータフレームに
+        for i, n in enumerate(list(self._setting_dict["extract"].keys())[1:]):
+            self._df_extract[n] = temp_data[i]
+        # 参照データを切り取り、データフレームに追加
+        temp_data = [[] for i in range(len(self._reference_data))]
+        for m in self._df_extract["start"]:
+            for i, n in enumerate(self._reference_data):
+                temp_data[i].append(self._df_delta.loc[m][self._setting_dict["label"][label_number][n]])
+        for i, n in enumerate(self._reference_data):
+            self._df_extract[self._setting_dict["label"][label_number][n]] = temp_data[i]
+        # 抽出データのプロット
+        if display_graph:
+            print("抽出したデータをプロット")
+            plot_graph(self._df_extract.loc[:,
+                                            list(self._setting_dict["extract"].keys())[1]:
+                                            self._setting_dict["label"][label_number][self._reference_data[-1]]],
+                       "抽出したデータをプロット",
+                       pg_plane=False)
+
+    def write_xlsx(self, write_mode="w"):
+        # エクセルに結果を書き込み
+        print(f"output.xlsxに『{self._process_label}』を書き込みました")
+        with pd.ExcelWriter("output.xlsx", mode=write_mode) as writer:
+            self._df_extract.to_excel(writer, sheet_name=self._process_label)
+
+
 def main():
-
-    # パラメータの取り出し
-    with open("setting.json", "r", encoding="utf-8") as setting:
-        setting_dict = json.load(setting)
-
-    # 結果データの読み込み
-    single_file_names = glob.glob(setting_dict["file"]["path"] + setting_dict["file"]["single"])
-    double_file_names = glob.glob(setting_dict["file"]["path"] + setting_dict["file"]["double"])
-    all_file_names = single_file_names + double_file_names
-    temp_list = []
-    for i in all_file_names:
-        print(i)
-        temp = pd.read_csv(i, skiprows=70, encoding="cp932")
-        temp_list.append(temp)
-
-    # データフレームの結合
-    df_csv = pd.concat(temp_list, ignore_index=False)
-    df_csv.reset_index(drop=True, inplace=True)
-
-    # カラム名をcsvから取得して変更する
-    with open(single_file_names[0], "r") as csv_file:
-        csv_reader = csv.reader(csv_file)
-        for i, row in enumerate(csv_reader):
-            if i == 40:
-                df_csv_label = row
-    df_csv.columns = ["date", "sec"] + df_csv_label[2:len(df_csv_label)]
-
-    # 処理するデータを選択する
-    process_label = setting_dict["label"]["01"]["00"]
-
-    # 参考データを取り出す
-    reference_data = list(setting_dict["label"]["01"].keys())[2:]
-    
-    # 生データの表示
-    print("読み込んだデータの一部（0～200000）を表示")
-    plot_graph(df_csv[0:200000][process_label],
-               "読み込んだデータの一部（0～200000）を表示")
-
-    # 閾値用の差分作成
-    # NaNは0埋め
-    delta_period = setting_dict["period"]["step"]
-    temp = pd.DataFrame(df_csv[process_label].diff(delta_period).fillna(0))
-    temp.columns = ["delta"]
-    df_delta = pd.merge(df_csv, temp, left_index=True, right_index=True)
-
-    # データの差分量を見る
-    print("データの差分量（0～200000）を表示")
-    plot_graph(df_delta[0000:200000]["delta"],
-               "データの差分量（0～200000）を表示")
-
-    # 閾値の行を取得
-    delta_start_triger = setting_dict["period"]["start"]
-    delta_end_triger = setting_dict["period"]["end"]
-    end_duplication_index = df_delta.index[df_delta["delta"] > delta_end_triger].tolist()
-    start_duplication_index = df_delta.index[df_delta["delta"] < delta_start_triger].tolist()
-
-    # 閾値が連続している行を削除
-    end_index = delete_duplicaion_index(end_duplication_index)
-    start_duplication_index.reverse()
-    start_index = delete_duplicaion_index(start_duplication_index)
-    start_index.reverse()
-
-    # 最初にエンドトリガーが来る場合、カットする必要がある
-    if start_index[0] > end_index[0]:
-        end_index.pop(0)
-
-    # 抽出したデータを格納するデータフレームを作る
-    df_extract = pd.DataFrame(list(zip(start_index, end_index)), columns=["start", "end"])
-    df_extract = df_extract.assign(period=df_extract["end"] - df_extract["start"])
-
-    # 切り出した区間の幅を表示
-    print("切り出した区間の長さをプロット:おかしな値が無いかここで確認する")
-    plot_graph(df_extract["period"],
-               "切り出した区間の長さをプロット:おかしな値が無いかここで確認する")
-
-    # 一部の切り出した波形を表示
-    df_plot_temp = pd.DataFrame(index=[])
-    for i, (m, n) in enumerate(zip(df_extract["start"], df_extract["end"])):
-        if 1000 < i < 1010:
-            temp = df_delta[m:n][process_label]
-            temp = temp.reset_index()
-            df_plot_temp[str(i)] = temp[process_label]
-    print("おかしなグラフが無いか確認する")
-    plot_graph(df_plot_temp,
-               "おかしなグラフが無いか確認する",
-               pg_plane=False)
-
-    # 切り取りタイミングの設定
-    extract_time = []
-    for i in list(setting_dict["extract"].keys())[1:]:
-        extract_time.append(setting_dict["extract"][i])
-
-    # 抽出データをリストに仮保存
-    temp_data = [[] for i in range(len(extract_time))]
-    for m in df_extract["start"]:
-        for i, n in enumerate(extract_time):
-            temp_data[i].append(df_delta.loc[m + n][process_label])
-    
-    # リストに仮保存したデータをデータフレームに
-    for i, n in enumerate(list(setting_dict["extract"].keys())[1:]):
-        df_extract[n] = temp_data[i]
-
-    # 参照データを切り取り、データフレームに追加
-    temp_data = [[] for i in range(len(reference_data))]
-    for m in df_extract["start"]:
-        for i, n in enumerate(reference_data):
-            temp_data[i].append(df_delta.loc[m][setting_dict["label"]["01"][n]])
-    for i, n in enumerate(reference_data):
-        df_extract[setting_dict["label"]["01"][n]] = temp_data[i]
-
-    # 抽出データのプロット
-    print("抽出したデータをプロット")
-    plot_graph(df_extract.loc[:, list(setting_dict["extract"].keys())[1]:setting_dict["label"]["01"][reference_data[-1]]],
-               "抽出したデータをプロット",
-               pg_plane=False)
-
-    # エクセルに結果を書き込み
-    print("output.xlsxに書き込みました")
-    df_extract.to_excel("output.xlsx", sheet_name=process_label)
+    data = ExtractorData("setting.json")
+    for i, n in enumerate(data.label_index):
+        data.confirm_data(n, display_graph=False)
+        data.generate_differences(display_graph=False)
+        data.cut_out_data(display_graph=False)
+        data.confirm_graphs(display_graph=False)
+        data.output_results(n, display_graph=False)
+        if i == 0:
+            data.write_xlsx()
+        else:
+            data.write_xlsx(write_mode="a")
 
 
 if __name__ == "__main__":
