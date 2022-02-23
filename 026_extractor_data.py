@@ -61,7 +61,14 @@ def plot_graph(pg_df, pg_title_text, pg_plane=True):
 
 
 class ExtractorData():
+    """concatenate csv files, extract specific data and save the results to excel.
+    """
     def __init__(self, json_file_path):
+        """read json, set the variables, concatenate csv files and make dataframe.
+
+        Args:
+            json_file_path (str): path of the json file.
+        """
         # パラメータの取り出し
         with open(json_file_path, "r", encoding="utf-8") as setting:
             self._setting_dict = json.load(setting)
@@ -98,6 +105,12 @@ class ExtractorData():
         self.label_index = list(self._label_dict.keys())
 
     def confirm_data(self, label_number, display_graph=True):
+        """confirm data
+
+        Args:
+            label_number (str): the label indicating the target data.
+            display_graph (bool, optional): graph display on/off. Defaults to True.
+        """
         # 処理するデータを選択する
         self._process_label = self._setting_dict["label"][label_number]["00"]
         # 参考データを取り出す
@@ -109,6 +122,11 @@ class ExtractorData():
                        "読み込んだデータの一部（0～200000）を表示")
 
     def generate_differences(self, display_graph=True):
+        """generate differences and make dataframe of results.
+
+        Args:
+            display_graph (bool, optional): graph display on/off. Defaults to True.
+        """
         # 閾値用の差分作成
         # NaNは0埋め
         self._delta_period = self._setting_dict["period"]["step"]
@@ -122,6 +140,11 @@ class ExtractorData():
                        "データの差分量（0～200000）を表示")
 
     def cut_out_data(self, display_graph=True):
+        """cut out the data which you need.
+
+        Args:
+            display_graph (bool, optional): graph display on/off. Defaults to True.
+        """
         # 閾値の行を取得
         self._delta_start_triger = self._setting_dict["period"]["start"]
         self._delta_end_triger = self._setting_dict["period"]["end"]
@@ -145,6 +168,11 @@ class ExtractorData():
                        "切り出した区間の長さをプロット:おかしな値が無いかここで確認する")
 
     def confirm_graphs(self, display_graph=True):
+        """confirm graphs to see if there is some problems.
+
+        Args:
+            display_graph (bool, optional): graph display on/off. Defaults to True.
+        """
         # データの一部を切り出し
         df_plot_temp = pd.DataFrame(index=[])
         for i, (m, n) in enumerate(zip(self._df_extract["start"], self._df_extract["end"])):
@@ -160,6 +188,12 @@ class ExtractorData():
                        pg_plane=False)
 
     def output_results(self, label_number, display_graph=True):
+        """confirm results to see if there is some problems.
+
+        Args:
+            label_number (str): the label indicating the target data.
+            display_graph (bool, optional): graph display on/off. Defaults to True.
+        """
         # 切り取りタイミングの設定
         extract_time = []
         for i in list(self._setting_dict["extract"].keys())[1:]:
@@ -189,6 +223,11 @@ class ExtractorData():
                        pg_plane=False)
 
     def write_xlsx(self, write_mode="w"):
+        """write xlsx file.
+
+        Args:
+            write_mode (str, optional): ExcelWriter's option. Defaults to "w".
+        """
         # エクセルに結果を書き込み
         print(f"output.xlsxに『{self._process_label}』を書き込みました")
         with pd.ExcelWriter("output.xlsx", mode=write_mode) as writer:
