@@ -59,45 +59,95 @@ def plot_graph(pg_df, pg_title_text, pg_plane=True):
         plt.tight_layout()
     plt.show()
 
+class ExtractorData():
+    def __init__(self, json_file_path):
+
+        # パラメータの取り出し
+        with open(json_file_path, "r", encoding="utf-8") as setting:
+            self._setting_dict = json.load(setting)
+
+        # 設定jsonから変数へ読み込み
+        # ファイル名
+        single_file_names = glob.glob(self._setting_dict["file"]["path"] + self._setting_dict["file"]["single"])
+        double_file_names = glob.glob(self._setting_dict["file"]["path"] + self._setting_dict["file"]["double"])
+        all_file_names = single_file_names + double_file_names
+        # ラベル
+        self._label_dict = self._setting_dict["label"]
+        # 閾値
+        self._period_step = self._setting_dict["period"]["step"]
+        self._period_start = self._setting_dict["period"]["start"]
+        self._period_end = self._setting_dict["period"]["end"]
+        # 抽出タイミング
+        self._extract_dict = self._setting_dict["extract"]
+
+        # 結果データの読み込み
+        temp_list = []
+        for i in all_file_names:
+            print(i)
+            temp = pd.read_csv(i, skiprows=70, encoding="cp932")
+            temp_list.append(temp)
+        
+        # データフレームの結合
+        self._df_csv = pd.concat(temp_list, ignore_index=False)
+        self._df_csv.reset_index(drop=True, inplace=True)
+
+        # カラム名をcsvから取得して変更する
+        with open(single_file_names[0], "r") as csv_file:
+            csv_reader = csv.reader(csv_file)
+            for i, row in enumerate(csv_reader):
+                if i == 40:
+                    df_csv_label = row
+        self._df_csv.columns = ["date", "sec"] + df_csv_label[2:len(df_csv_label)]
+
+        # ラベル名のリストを戻す
+        self.label_index = list(self._label_dict.keys())
+
+    def confirm_data(self, label_number):
+        # 処理するデータを選択する
+        self._process_label = self._setting_dict["label"][label_number]["00"]
+        # 参考データを取り出す
+        self._reference_data = list(self._setting_dict["label"][label_number].keys())[2:]
+        # 生データの表示
+        print("読み込んだデータの一部（0～200000）を表示")
+        plot_graph(self._df_csv[0:200000][self._process_label],
+                   "読み込んだデータの一部（0～200000）を表示")
+
+    def generate_differences(self, label_number):
+        # 閾値用の差分作成
+        # NaNは0埋め
+        delta_period = setting_dict["period"]["step"]
+        temp = pd.DataFrame(df_csv[process_label].diff(delta_period).fillna(0))
+        temp.columns = ["delta"]
+        df_delta = pd.merge(df_csv, temp, left_index=True, right_index=True)
+        # データの差分量を見る
+        print("データの差分量（0～200000）を表示")
+        plot_graph(df_delta[0000:200000]["delta"],
+                   "データの差分量（0～200000）を表示")
+
+
+
+
 
 def main():
 
-    # パラメータの取り出し
-    with open("setting.json", "r", encoding="utf-8") as setting:
-        setting_dict = json.load(setting)
+    data = ExtractorData("setting.json")
 
-    # 結果データの読み込み
-    single_file_names = glob.glob(setting_dict["file"]["path"] + setting_dict["file"]["single"])
-    double_file_names = glob.glob(setting_dict["file"]["path"] + setting_dict["file"]["double"])
-    all_file_names = single_file_names + double_file_names
-    temp_list = []
-    for i in all_file_names:
-        print(i)
-        temp = pd.read_csv(i, skiprows=70, encoding="cp932")
-        temp_list.append(temp)
+    for i in data.label_index:
+        data.confirm_data(i)
+        data.generate_differences(i)
 
-    # データフレームの結合
-    df_csv = pd.concat(temp_list, ignore_index=False)
-    df_csv.reset_index(drop=True, inplace=True)
-
-    # カラム名をcsvから取得して変更する
-    with open(single_file_names[0], "r") as csv_file:
-        csv_reader = csv.reader(csv_file)
-        for i, row in enumerate(csv_reader):
-            if i == 40:
-                df_csv_label = row
-    df_csv.columns = ["date", "sec"] + df_csv_label[2:len(df_csv_label)]
-
-    # 処理するデータを選択する
-    process_label = setting_dict["label"]["01"]["00"]
-
-    # 参考データを取り出す
-    reference_data = list(setting_dict["label"]["01"].keys())[2:]
     
-    # 生データの表示
-    print("読み込んだデータの一部（0～200000）を表示")
-    plot_graph(df_csv[0:200000][process_label],
-               "読み込んだデータの一部（0～200000）を表示")
+
+    
+
+    
+
+    
+
+
+    
+    
+    
 
     # 閾値用の差分作成
     # NaNは0埋め
