@@ -237,11 +237,11 @@ class ExtractorData():
 def main():
     data = ExtractorData("setting.json")
     for i, n in enumerate(data.label_index):
-        data.confirm_data(n, display_graph=False)
+        data.confirm_data(n, display_graph=True)
         data.generate_differences(display_graph=False)
         data.cut_out_data(display_graph=False)
         data.confirm_graphs(display_graph=False)
-        data.output_results(n, display_graph=False)
+        data.output_results(n, display_graph=True)
         if i == 0:
             data.write_xlsx()
         else:
