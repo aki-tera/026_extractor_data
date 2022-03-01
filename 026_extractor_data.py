@@ -3,6 +3,8 @@ import csv
 
 import glob
 import pandas as pd
+from pandas.core.series import Series
+from pandas.core.frame import DataFrame
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
@@ -43,22 +45,34 @@ def plot_graph(pg_df, pg_title_text, pg_plane=True):
     """
     fig = plt.figure(figsize=(10, 6))
     if pg_plane:
-        ax_1 = fig.add_subplot()
-        ax_2 = ax_1.twinx()
-        # 色の設定
-        color_1 = cm.Set1.colors[1]
-        color_2 = cm.Set1.colors[4]
-        # 表示
-        # 色はcm, 前後の指示はzorder, 線幅はlinewidth
-        pg_df.iloc[:, 0].plot(ax=ax_1, color=color_1, zorder=-2, linewidth=2)
-        pg_df.iloc[:, 1].plot(ax=ax_2, color=color_2, zorder=-1, linewidth=0.5)
-        # タイトルとグリッド表示
-        _ = ax_1.set_title(pg_title_text)
-        _ = ax_1.grid(True)
-        # グラフの凡例をまとめる
-        handler_1, label_1 = ax_1.get_legend_handles_labels()
-        handler_2, label_2 = ax_2.get_legend_handles_labels()
-        _ = ax_2.legend(handler_1 + handler_2, label_1 + label_2)
+        if type(pg_df) == DataFrame:
+            ax_1 = fig.add_subplot()
+            ax_2 = ax_1.twinx()
+            # 色の設定
+            color_1 = cm.Set1.colors[1]
+            color_2 = cm.Set1.colors[4]
+            # 表示
+            # 色はcm, 前後の指示はzorder, 線幅はlinewidth
+            # エラーが発生した場合はグラフは1個のみ表示
+            pg_df.iloc[:, 0].plot(ax=ax_1, color=color_1, zorder=-2, linewidth=2)
+            pg_df.iloc[:, 1].plot(ax=ax_2, color=color_2, zorder=-1, linewidth=0.5)
+            # グラフの凡例をまとめる
+            handler_1, label_1 = ax_1.get_legend_handles_labels()
+            handler_2, label_2 = ax_2.get_legend_handles_labels()
+            _ = ax_2.legend(handler_1 + handler_2, label_1 + label_2)
+            # タイトルとグリッド表示
+            _ = ax_1.set_title(pg_title_text)
+            _ = ax_1.grid(True)
+        elif type(pg_df) == Series:
+            ax = fig.add_subplot()
+            pg_df.plot(ax=ax)
+            _ = ax.legend()
+            # タイトルとグリッド表示
+            _ = ax.set_title(pg_title_text)
+            _ = ax.grid(True)
+        else:
+            raise Exception("pandasの型式ではありません。")
+        
     else:
         ax = fig.subplots(3, 3)
         plt.suptitle(pg_title_text)
@@ -155,9 +169,10 @@ class ExtractorData():
         self._df_delta = pd.merge(self._df_csv, temp, left_index=True, right_index=True)
         # データの差分量を見る
         if display_graph:
-            print("データの差分量（0～200000）を表示")
-            plot_graph(self._df_delta[0000:200000]["delta"],
-                       "データの差分量（0～200000）を表示")
+            print(f"読み込んだデータの一部（{self._1st_plot_range_start}～{self._1st_plot_range_end}）を表示")
+            plot_graph(self._df_delta.loc[self._1st_plot_range_start:self._1st_plot_range_end,
+                                          ["delta", self._process_label]],
+                       f"読み込んだデータの一部（{self._1st_plot_range_start}～{self._1st_plot_range_end}）を表示")
 
     def cut_out_data(self, display_graph=True):
         """cut out the data which you need.
@@ -258,9 +273,9 @@ def main():
     data = ExtractorData("setting.json")
     for i, n in enumerate(data.label_index):
         data.confirm_data(n, display_graph=True)
-        data.generate_differences(display_graph=False)
-        data.cut_out_data(display_graph=False)
-        data.confirm_graphs(display_graph=False)
+        data.generate_differences(display_graph=True)
+        data.cut_out_data(display_graph=True)
+        data.confirm_graphs(display_graph=True)
         data.output_results(n, display_graph=True)
         if i == 0:
             data.write_xlsx()
