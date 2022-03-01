@@ -117,10 +117,12 @@ class ExtractorData():
         self._process_label = self._setting_dict["label"][label_number]["00"]
         # 参考データを取り出す
         self._reference_data = list(self._setting_dict["label"][label_number].keys())[2:]
+        # プロットする参照データを選択する
+        self._reference_label = self._setting_dict["label"][label_number]["01"]
         # 生データの表示
         if display_graph:
             print("読み込んだデータの一部（0～200000）を表示")
-            plot_graph(self._df_csv[0:200000][self._process_label],
+            plot_graph(self._df_csv.loc[0:200000, [self._process_label, self._reference_label]],
                        "読み込んだデータの一部（0～200000）を表示")
 
     def generate_differences(self, display_graph=True):
