@@ -4,6 +4,7 @@ import csv
 import glob
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import cm
 
 # 日本語フォント設定
 from matplotlib import rc
@@ -42,11 +43,22 @@ def plot_graph(pg_df, pg_title_text, pg_plane=True):
     """
     fig = plt.figure(figsize=(10, 6))
     if pg_plane:
-        ax = fig.add_subplot()
-        pg_df.plot(ax=ax)
-        _ = ax.set_title(pg_title_text)
-        _ = ax.grid(True)
-        _ = ax.legend()
+        ax_1 = fig.add_subplot()
+        ax_2 = ax_1.twinx()
+        # 色の設定
+        color_1 = cm.Set1.colors[1]
+        color_2 = cm.Set1.colors[4]
+        # 表示
+        # 色はcm, 前後の指示はzorder, 線幅はlinewidth
+        pg_df.iloc[:, 0].plot(ax=ax_1, color=color_1, zorder=-2, linewidth=2)
+        pg_df.iloc[:, 1].plot(ax=ax_2, color=color_2, zorder=-1, linewidth=0.5)
+        # タイトルとグリッド表示
+        _ = ax_1.set_title(pg_title_text)
+        _ = ax_1.grid(True)
+        # グラフの凡例をまとめる
+        handler_1, label_1 = ax_1.get_legend_handles_labels()
+        handler_2, label_2 = ax_2.get_legend_handles_labels()
+        _ = ax_2.legend(handler_1 + handler_2, label_1 + label_2)
     else:
         ax = fig.subplots(3, 3)
         plt.suptitle(pg_title_text)
