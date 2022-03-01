@@ -38,7 +38,7 @@ def plot_graph(pg_df, pg_title_text, pg_plane=True):
     """plot pandas DataFrame on the graph(s).
 
     Args:
-        pg_df (pandas.DataFrame): Data to be graphed.
+        pg_df (pandas.DataFrame or pandas.Series): Data to be graphed.
         pg_title_text (str): title
         pg_plane (bool, optional): Choose between a single graph or multiple graphs.
                                    Defaults to True.
