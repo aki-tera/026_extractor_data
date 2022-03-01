@@ -85,6 +85,8 @@ class ExtractorData():
         self._period_end = self._setting_dict["period"]["end"]
         # 抽出タイミング
         self._extract_dict = self._setting_dict["extract"]
+        # 参照データの切り取りタイミング
+        self._referance_1st = self._setting_dict["reference"]["1st"]
         # 結果データの読み込み
         temp_list = []
         for i in all_file_names:
@@ -210,7 +212,7 @@ class ExtractorData():
         temp_data = [[] for i in range(len(self._reference_data))]
         for m in self._df_extract["start"]:
             for i, n in enumerate(self._reference_data):
-                temp_data[i].append(self._df_delta.loc[m][self._setting_dict["label"][label_number][n]])
+                temp_data[i].append(self._df_delta.loc[m + self._referance_1st][self._setting_dict["label"][label_number][n]])
         for i, n in enumerate(self._reference_data):
             self._df_extract[self._setting_dict["label"][label_number][n]] = temp_data[i]
         # 抽出データのプロット
