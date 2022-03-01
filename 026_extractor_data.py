@@ -95,6 +95,9 @@ class ExtractorData():
         self._period_step = self._setting_dict["period"]["step"]
         self._period_start = self._setting_dict["period"]["start"]
         self._period_end = self._setting_dict["period"]["end"]
+        # 初回プロットの範囲
+        self._1st_plot_range_start = self._setting_dict["1st_plot"]["start"]
+        self._1st_plot_range_end = self._setting_dict["1st_plot"]["end"]
         # 抽出タイミング
         self._extract_dict = self._setting_dict["extract"]
         # 参照データの切り取りタイミング
@@ -133,9 +136,10 @@ class ExtractorData():
         self._reference_label = self._setting_dict["label"][label_number]["01"]
         # 生データの表示
         if display_graph:
-            print("読み込んだデータの一部（0～200000）を表示")
-            plot_graph(self._df_csv.loc[0:200000, [self._process_label, self._reference_label]],
-                       "読み込んだデータの一部（0～200000）を表示")
+            print(f"読み込んだデータの一部（{self._1st_plot_range_start}～{self._1st_plot_range_end}）を表示")
+            plot_graph(self._df_csv.loc[self._1st_plot_range_start:self._1st_plot_range_end,
+                                        [self._process_label, self._reference_label]],
+                       f"読み込んだデータの一部（{self._1st_plot_range_start}～{self._1st_plot_range_end}）を表示")
 
     def generate_differences(self, display_graph=True):
         """generate differences and make dataframe of results.
