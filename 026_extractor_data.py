@@ -212,7 +212,7 @@ class ExtractorData():
         temp_data = [[] for i in range(len(self._reference_data))]
         for m in self._df_extract["start"]:
             for i, n in enumerate(self._reference_data):
-                temp_data[i].append(self._df_delta.loc[m][self._setting_dict["label"][label_number][n]])
+                temp_data[i].append(self._df_delta.loc[m + self._referance_1st][self._setting_dict["label"][label_number][n]])
         for i, n in enumerate(self._reference_data):
             self._df_extract[self._setting_dict["label"][label_number][n]] = temp_data[i]
         # 抽出データのプロット
